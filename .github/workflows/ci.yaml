@@ -17,6 +17,8 @@ jobs:
             run: |
               echo "Repository checked out successfully"
               ls -la $GITHUB_WORKSPACE
+
+        # Set up Python/ Install the python interpreter
           - name: Set Up Python
             uses: actions/setup-python@v4
             with:
@@ -55,3 +57,9 @@ jobs:
             with:
               name: test_results
               path: test_results.txt
+        
+        # Append to a GitHub Action summary page
+          - name: Add test results to summary
+            run: |
+              echo "### PyTest Results" >> $GITHUB_STEP_SUMMARY
+              cat test_results.txt >> $GITHUB_STEP_SUMMARY
