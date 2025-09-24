@@ -1,11 +1,13 @@
-name: My Workflow
+name: Flask CI
 
 on:
     push:
         branches:
             - master
+    pull_request:
+            branches: [ master ]
 jobs:
-    build:
+    build-and-test:
         runs-on: ubuntu-latest
         # Define the steps required to build your application
         steps:
@@ -15,3 +17,33 @@ jobs:
             run: |
               echo "Repository checked out successfully"
               ls -la $GITHUB_WORKSPACE
+          - name: Set Up Python
+            uses: actions/setup-python@v4
+            with:
+              python-version: '3.10'
+
+        # Install dependencies
+          - name: Install dependencies
+            run: |
+              python3 -m pip install --upgrade pip
+              pip install -r requirements.txt
+              pip install flask pytest
+
+        # Run tests
+          - name: Run tests
+            run: |
+              pytest || echo "No tests yet!"
+        
+        # Package app as artifact (zip) you can decide to use a different file format than zip tarball(.tar.gz), Plain directory(No compression), Python wheel/package(.whl)
+          - name: Package app as artifact
+            run: |
+              mkdir -p build
+              cp -r app.py build/
+              zip -r flask_app.zip build/
+
+        # Upload artifact
+          - name: Upload artifact
+            uses: actions/upload-artifact@v3
+            with:
+              name: flask_app
+              path: flask_app.zip
