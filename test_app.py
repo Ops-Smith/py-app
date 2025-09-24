@@ -1,4 +1,4 @@
-from app import app
+from app import app # This imports the Flask App
 
 def test_home():
     # Use Flask's test client
