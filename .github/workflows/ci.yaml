@@ -48,3 +48,10 @@ jobs:
             with:
               name: flask_app
               path: flask_app.zip
+            
+        # Upload test results separately
+          - name: Upload test results
+            uses: actions/upload-artifact@v4
+            with:
+              name: test_results
+              path: test_results.txt
