@@ -1,17 +1,17 @@
-# name: My Workflow
+name: My Workflow
 
-# on:
-#     push:
-#         branches:
-#             - master
-# jobs:
-#     build:
-#         runs-on: ubuntu-latest
-#         # Define the steps required to build your application
-#         steps:
-#           - name: Checkout Repo for code
-#             uses: actions/checkout@v4 # $GITHUB_WORKSPACE
-#           - name: Run a one-line script
-#             run: |
-#               echo "Repository checked out successfully"
-#               ls -l $GITHUB_WORKSPACE
+on:
+    push:
+        branches:
+            - master
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        # Define the steps required to build your application
+        steps:
+          - name: Checkout Repo for code
+            uses: actions/checkout@v4 # $GITHUB_WORKSPACE
+          - name: Run a one-line script
+            run: |
+              echo "Repository checked out successfully"
+              ls -l $GITHUB_WORKSPACE
