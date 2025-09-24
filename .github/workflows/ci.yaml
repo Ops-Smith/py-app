@@ -32,7 +32,8 @@ jobs:
         # Run tests
           - name: Run tests
             run: |
-              pytest || echo "No tests yet!"
+              pytest > test_results.txt 2>&1 || true
+              cat test_results.txt
         
         # Package app as artifact (zip) you can decide to use a different file format than zip tarball(.tar.gz), Plain directory(No compression), Python wheel/package(.whl)
           - name: Package app as artifact
