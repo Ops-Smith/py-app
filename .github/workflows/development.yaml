@@ -58,7 +58,7 @@ jobs:
       - name: 🧪 Run Unit Tests
         run: |
           echo "Running tests..."
-            pytest test_app.py -v --junit-xml=test-results.xml || echo "Tests failed..."
+            pytest test_app.py -v --junit-xml=test-results.xml || echo "Tests failed.."
 
       - name: 📊 Upload Test Results
         uses: actions/upload-artifact@v4
