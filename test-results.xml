@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="0.170" timestamp="2025-10-07T12:49:25.654701" hostname="runnervmwhb2z"><testcase classname="test_app" name="test_home" time="0.004"><failure message="assert b&quot;Welcome David!. You've successfully rebuilt the Flask App&quot; in b'\xf0\x9f\x9a\x80 Welcome to Our CI/CD Pipeline! Application successfully deployed through Development \xe2\x86\x92 Staging \xe2\x86\x92 Production'&#10; +  where b'\xf0\x9f\x9a\x80 Welcome to Our CI/CD Pipeline! Application successfully deployed through Development \xe2\x86\x92 Staging \xe2\x86\x92 Production' = &lt;WrapperTestResponse 116 bytes [200 OK]&gt;.data">def test_home():
+        # Use Flask's test client
+        client = app.test_client()
+        response = client.get("/")
+        assert response.status_code == 200
+&gt;       assert b"Welcome David!. You've successfully rebuilt the Flask App" in response.data
+E       assert b"Welcome David!. You've successfully rebuilt the Flask App" in b'\xf0\x9f\x9a\x80 Welcome to Our CI/CD Pipeline! Application successfully deployed through Development \xe2\x86\x92 Staging \xe2\x86\x92 Production'
+E        +  where b'\xf0\x9f\x9a\x80 Welcome to Our CI/CD Pipeline! Application successfully deployed through Development \xe2\x86\x92 Staging \xe2\x86\x92 Production' = &lt;WrapperTestResponse 116 bytes [200 OK]&gt;.data
+
+test_app.py:8: AssertionError</failure></testcase><testcase classname="test_app" name="test_health" time="0.001" /></testsuite></testsuites>
