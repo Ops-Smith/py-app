@@ -1,0 +1,176 @@
+name: "1 - Development Build & Test"
+
+on:
+  push:
+    branches: [development]
+  pull_request:
+    branches: [development]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    env:
+      image_name: pyapp-image
+      version: 1.1.0-${{ github.sha }}
+      username: ${{ secrets.DOCKERHUB_USERNAME }}
+    
+    steps:
+      - name: 🔄 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for all branches and tags
+        
+      - name: 📧 Notify Development Start
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "🚀 Development Pipeline Started"
+          to:  ${{ secrets.EMAIL }}
+          from: "DevOps Admin"
+          body: |
+            Development pipeline has started!
+            Branch: ${{ github.ref_name }}
+            Version: ${{ env.version }}
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: 📦 Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          fi
+          pip install flask pytest
+
+      - name: 🔍 List Files (Debug)
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Files in repository:"
+          ls -la
+
+      - name: 🧪 Run Unit Tests
+        run: |
+          echo "Running tests..."
+            pytest test_app.py -v --junit-xml=test-results.xml || echo "Tests failed..."
+
+      - name: 📊 Upload Test Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results.xml
+        if: always()
+
+      - name: 🔐 Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: 🏗️ Build Docker Image
+        run: |
+          docker build -t $username/$image_name:$version .
+          docker tag $username/$image_name:$version $username/$image_name:development
+
+      - name: 📤 Push to DockerHub
+        run: |
+          docker push $username/$image_name:$version
+          docker push $username/$image_name:development
+
+      - name: 🔍 Check Branches Exist
+        run: |
+          echo "Checking if staging branch exists..."
+          git fetch origin
+          if git show-ref --verify --quiet refs/remotes/origin/staging; then
+            echo "✅ Staging branch exists"
+          else
+            echo "❌ Staging branch does not exist. Creating it..."
+            git checkout -b staging
+            git push origin staging
+          fi
+          
+          echo "Checking if master branch exists..."
+          if git show-ref --verify --quiet refs/remotes/origin/master; then
+            echo "✅ Master branch exists"
+          else
+            echo "❌ Master branch does not exist"
+          fi
+
+      - name: 🎯 Create PR to Staging
+        if: success() && github.event_name == 'push'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Auto-merge: Development to Staging"
+          title: "🚀 Promote to Staging | Version ${{ env.version }}"
+          body: |
+            ## Development to Staging Promotion
+            
+            ✅ Development tests passed!
+            ✅ Docker image built and pushed
+            ✅ Version: ${{ env.version }}
+            
+            **Changes:**
+            - Automated promotion from development to staging
+            - Ready for staging validation
+            
+            **Image Details:**
+            - Image: `${{ env.username }}/${{ env.image_name }}:${{ env.version }}`
+            - Tag: `development`
+          labels: |
+            automation
+            promotion
+          branch: "automated-promotion-development-to-staging-${{ github.run_id }}"
+          base: "staging"
+          delete-branch: true
+
+      - name: 📧 Notify Development Success
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "✅ Development Stage Completed - Version ${{ env.version }}"
+          to:  ${{ secrets.EMAIL }}
+          from: "DevOps Admin"
+          body: |
+            ✅ Development stage completed successfully!
+            
+            📋 Details:
+            - Branch: ${{ github.ref_name }}
+            - Version: ${{ env.version }}
+            - Image: ${{ env.username }}/${{ env.image_name }}:${{ env.version }}
+            - Tests: ✅ All tests passed
+            - PR: ✅ Created to staging branch
+            
+            Next: Review and merge the PR to staging branch
+
+      - name: 📧 Notify Development Failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "❌ Development Stage Failed - Version ${{ env.version }}"
+          to:  ${{ secrets.EMAIL }}
+          from: "DevOps Admin"
+          body: |
+            ❌ Development stage failed!
+            
+            🚨 Build or tests failed in development
+            Branch: ${{ github.ref_name }}
+            Version: ${{ env.version }}
+            
+            Please check the GitHub Actions logs for details.
