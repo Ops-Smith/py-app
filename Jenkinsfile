@@ -1,0 +1,89 @@
+pipeline {
+    agent any
+    
+    // AUTO-TRIGGER CONFIGURATION
+    triggers {
+        githubPush()  // Enables automatic webhook triggering
+    }
+    
+    environment {
+        DOCKER_IMAGE = "preenturionboy/py-app"
+        DEPLOY_ENV = "${env.BRANCH_NAME == 'master' ? 'production' : env.BRANCH_NAME == 'staging' ? 'staging' : 'development'}"
+        DOCKER_TAG = "${DEPLOY_ENV}-${env.BUILD_NUMBER}"
+        CONTAINER_PORT = "${env.BRANCH_NAME == 'master' ? '5001' : env.BRANCH_NAME == 'staging' ? '5002' : '5003'}"
+        APP_URL = "http://localhost:${CONTAINER_PORT}"
+    }
+    
+    stages {
+        stage('Webhook Triggered') {
+            steps {
+                echo "🎯 AUTO-TRIGGER: Started by GitHub webhook"
+                echo "📌 Branch: ${env.BRANCH_NAME}"
+                echo "🌐 Environment: ${DEPLOY_ENV}"
+            }
+        }
+        
+        stage('Build & Test') {
+            steps {
+                echo "🔨 Building ${DEPLOY_ENV}"
+                sh '''
+                    pip install -r requirements.txt
+                    python -m pytest test_app.py -v
+                '''
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                echo "🐳 Building image..."
+                sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+            }
+        }
+        
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'docker-hub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                        docker login -u $DOCKER_USER -p $DOCKER_PASS
+                        docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+                    '''
+                }
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                echo "🚀 Deploying ${DEPLOY_ENV} to port ${CONTAINER_PORT}"
+                sh """
+                    docker stop py-app-${DEPLOY_ENV} || true
+                    docker rm py-app-${DEPLOY_ENV} || true
+                    docker run -d -p ${CONTAINER_PORT}:5000 --name py-app-${DEPLOY_ENV} ${DOCKER_IMAGE}:${DOCKER_TAG}
+                """
+            }
+        }
+        
+        stage('Health Check') {
+            steps {
+                sh """
+                    sleep 5
+                    curl -f ${APP_URL}/health && echo "✅ ${DEPLOY_ENV} is healthy!" || echo "⚠️ Health check failed"
+                    echo "🌐 Access: ${APP_URL}"
+                """
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo "📊 Build ${env.BUILD_NUMBER} completed"
+        }
+        success {
+            echo "🎉 AUTO-DEPLOY SUCCESSFUL!"
+            echo "🌐 ${DEPLOY_ENV}: ${APP_URL}"
+        }
+    }
+}
