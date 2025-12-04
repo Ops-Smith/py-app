@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "🚀 Welcome to Our CI/CD Pipeline! Application successfully deployed through Development → Staging → Production"
+    return "🚀 Welcome David!. You've successfully rebuilt the Flask App"
 
 @app.route("/health")
 def health():
