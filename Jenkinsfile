@@ -9,7 +9,7 @@ pipeline {
         githubPush()
     }
     environment {
-        DOCKER_IMAGE = "preenturionboy/py-app"
+        DOCKER_IMAGE = "monyslim/py-app"
         DEPLOY_ENV = "${env.BRANCH_NAME == 'master' ? 'production' : env.BRANCH_NAME == 'staging' ? 'staging' : 'development'}"
         DOCKER_TAG = "${DEPLOY_ENV}-${env.BUILD_NUMBER}"
         CONTAINER_PORT = "${env.BRANCH_NAME == 'master' ? '5001' : env.BRANCH_NAME == 'staging' ? '5002' : '5003'}"
