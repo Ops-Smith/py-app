@@ -43,7 +43,7 @@ pipeline {
                 sh '''
                     # Use python3 and pip3
                     pip3 install -r requirements.txt
-                    python3 -m pytest test_app.py -v || echo "⚠️ Tests failed but continuing...""
+                    python3 -m pytest test_app.py -v || echo "⚠️ Tests failed but continuing..."
                 '''
             }
         }
