@@ -5,7 +5,11 @@ def test_home():
     client = app.test_client()
     response = client.get("/")
     assert response.status_code == 200
-    assert b"Welcome David!. You've successfully rebuilt the Flask App" in response.data
+    
+    # Decode bytes to string for comparison
+    response_text = response.data.decode('utf-8')
+    assert "🚀 Welcome to Our CI/CD Pipeline! Application successfully deployed through Development → Staging → Production" in response_text
+
 def test_health():
     client = app.test_client()
     response = client.get("/health")

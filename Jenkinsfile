@@ -1,9 +1,9 @@
 pipeline {
     agent any
-    options {
-        // Disable GitHub commit status updates
-        disableConcurrentBuilds()
-        skipDefaultCheckout()
+    // options {
+    //     // Disable GitHub commit status updates
+    //     disableConcurrentBuilds()
+    //     skipDefaultCheckout(g)
     }
     triggers {
         githubPush()
