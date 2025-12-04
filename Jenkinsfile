@@ -1,11 +1,13 @@
 pipeline {
     agent any
-    
-    // AUTO-TRIGGER CONFIGURATION
-    triggers {
-        githubPush()  // Enables automatic webhook triggering
+    options {
+        // Disable GitHub commit status updates
+        disableConcurrentBuilds()
+        skipDefaultCheckout()
     }
-    
+    triggers {
+        githubPush()
+    }
     environment {
         DOCKER_IMAGE = "preenturionboy/py-app"
         DEPLOY_ENV = "${env.BRANCH_NAME == 'master' ? 'production' : env.BRANCH_NAME == 'staging' ? 'staging' : 'development'}"
@@ -13,7 +15,6 @@ pipeline {
         CONTAINER_PORT = "${env.BRANCH_NAME == 'master' ? '5001' : env.BRANCH_NAME == 'staging' ? '5002' : '5003'}"
         APP_URL = "http://localhost:${CONTAINER_PORT}"
     }
-    
     stages {
         stage('Webhook Triggered') {
             steps {
@@ -23,12 +24,26 @@ pipeline {
             }
         }
         
+        stage('Setup Python') {
+            steps {
+                echo "🐍 Setting up Python..."
+                sh '''
+                    # Install Python and pip
+                    sudo apt update
+                    sudo apt install -y python3 python3-pip
+                    # Use pip3 explicitly
+                    pip3 install -r requirements.txt
+                '''
+            }
+        }
+        
         stage('Build & Test') {
             steps {
                 echo "🔨 Building ${DEPLOY_ENV}"
                 sh '''
-                    pip install -r requirements.txt
-                    python -m pytest test_app.py -v
+                    # Use python3 and pip3
+                    pip3 install -r requirements.txt
+                    python3 -m pytest test_app.py -v
                 '''
             }
         }
@@ -84,6 +99,9 @@ pipeline {
         success {
             echo "🎉 AUTO-DEPLOY SUCCESSFUL!"
             echo "🌐 ${DEPLOY_ENV}: ${APP_URL}"
+        }
+        failure {
+            echo "❌ Pipeline failed - check logs"
         }
     }
 }
