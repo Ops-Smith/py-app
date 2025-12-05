@@ -5,8 +5,8 @@ pipeline {
     //     disableConcurrentBuilds()
     //     skipDefaultCheckout(g)
     // }
-    triggers {
-        githubPush()
+    // triggers {
+    //     githubPush()
     }
     environment {
         DOCKER_IMAGE = "monyslim/py-app"
@@ -15,27 +15,27 @@ pipeline {
         CONTAINER_PORT = "${env.BRANCH_NAME == 'master' ? '5001' : env.BRANCH_NAME == 'staging' ? '5002' : '5003'}"
         APP_URL = "http://localhost:${CONTAINER_PORT}"
     }
-    stages {
-        stage('Webhook Triggered') {
-            steps {
-                echo "🎯 AUTO-TRIGGER: Started by GitHub webhook"
-                echo "📌 Branch: ${env.BRANCH_NAME}"
-                echo "🌐 Environment: ${DEPLOY_ENV}"
-            }
-        }
+    // stages {
+    //     stage('Webhook Triggered') {
+    //         steps {
+    //             echo "🎯 AUTO-TRIGGER: Started by GitHub webhook"
+    //             echo "📌 Branch: ${env.BRANCH_NAME}"
+    //             echo "🌐 Environment: ${DEPLOY_ENV}"
+    //         }
+    //     }
         
-        stage('Setup Python') {
-            steps {
-                echo "🐍 Setting up Python..."
-                sh '''
-                    # Install Python and pip
-                    sudo apt update
-                    sudo apt install -y python3 python3-pip
-                    # Use pip3 explicitly
-                    pip3 install -r requirements.txt
-                '''
-            }
-        }
+        // stage('Setup Python') {
+        //     steps {
+        //         echo "🐍 Setting up Python..."
+        //         sh '''
+        //             # Install Python and pip
+        //             sudo apt update
+        //             sudo apt install -y python3 python3-pip
+        //             # Use pip3 explicitly
+        //             pip3 install -r requirements.txt
+        //         '''
+        //     }
+        // }
         
         stage('Build & Test') {
             steps {
