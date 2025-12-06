@@ -26,7 +26,7 @@ pipeline {
                 echo "🔨 Building ${DEPLOY_ENV}"
                 sh '''
                     pip3 install -r requirements.txt
-                    python3 -m pytest test_app.py -v || echo "⚠️ Tests may have warnings"
+                    python3 -m pytest test_app.py -v || echo "⚠️ Tests may have warnings.."
                 '''
             }
         }
