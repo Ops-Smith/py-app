@@ -7,33 +7,43 @@ pipeline {
         DOCKER_TAG = "${DEPLOY_ENV}-${env.BUILD_NUMBER}"
         CONTAINER_PORT = "${env.BRANCH_NAME == 'master' ? '5001' : env.BRANCH_NAME == 'staging' ? '5002' : '5003'}"
         APP_URL = "http://localhost:${CONTAINER_PORT}"
+        VENV_PATH = "venv"
     }
     
     stages {
         stage('Setup Python') {
             steps {
-                echo "🐍 Setting up Python..."
+                echo "🐍 Setting up Python environment..."
                 sh '''
                     sudo apt update
-                    sudo apt install -y python3 python3-pip
-                    pip3 install -r requirements.txt
+                    sudo apt install -y python3 python3-pip python3-venv
+
+                    # Create virtual environment ONLY if it does not exist
+                    if [ ! -d "${VENV_PATH}" ]; then
+                        python3 -m venv ${VENV_PATH}
+                    fi
+
+                    # Activate venv and install dependencies
+                    . ${VENV_PATH}/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
                 '''
             }
         }
         
         stage('Build & Test') {
             steps {
-                echo "🔨 Building ${DEPLOY_ENV}"
+                echo "🔨 Running tests..."
                 sh '''
-                    pip3 install -r requirements.txt
-                    python3 -m pytest test_app.py -v || echo "⚠️ Tests may have warnings.."
+                    . ${VENV_PATH}/bin/activate
+                    pytest test_app.py -v || echo "⚠️ Tests may have warnings.."
                 '''
             }
         }
         
         stage('Build Docker Image') {
             steps {
-                echo "🐳 Building image..."
+                echo "🐳 Building Docker image..."
                 sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
             }
         }
@@ -59,7 +69,10 @@ pipeline {
                 sh """
                     docker stop py-app-${DEPLOY_ENV} || true
                     docker rm py-app-${DEPLOY_ENV} || true
-                    docker run -d -p ${CONTAINER_PORT}:5000 --name py-app-${DEPLOY_ENV} ${DOCKER_IMAGE}:${DOCKER_TAG}
+                    
+                    docker run -d -p ${CONTAINER_PORT}:5000 \
+                        --name py-app-${DEPLOY_ENV} \
+                        ${DOCKER_IMAGE}:${DOCKER_TAG}
                 """
             }
         }
@@ -69,7 +82,7 @@ pipeline {
                 sh """
                     sleep 5
                     curl -f ${APP_URL}/health && echo "✅ ${DEPLOY_ENV} is healthy!" || echo "⚠️ Health check failed"
-                    echo "🌐 Access: ${APP_URL}"
+                    echo "🌐 Access app at: ${APP_URL}"
                 """
             }
         }
