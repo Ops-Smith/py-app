@@ -56,8 +56,8 @@ pipeline {
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     sh '''
-                        docker login -u $DOCKER_USER -p $DOCKER_PASS
-                        docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+                        sudo docker login -u $DOCKER_USER -p $DOCKER_PASS
+                        sudo docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
                     '''
                 }
             }
@@ -67,10 +67,10 @@ pipeline {
             steps {
                 echo "🚀 Deploying ${DEPLOY_ENV} to port ${CONTAINER_PORT}"
                 sh """
-                    docker stop py-app-${DEPLOY_ENV} || true
-                    docker rm py-app-${DEPLOY_ENV} || true
+                    sudo docker stop py-app-${DEPLOY_ENV} || true
+                    sudo docker rm py-app-${DEPLOY_ENV} || true
                     
-                    docker run -d -p ${CONTAINER_PORT}:5000 \
+                    sudo docker run -d -p ${CONTAINER_PORT}:5000 \
                         --name py-app-${DEPLOY_ENV} \
                         ${DOCKER_IMAGE}:${DOCKER_TAG}
                 """
