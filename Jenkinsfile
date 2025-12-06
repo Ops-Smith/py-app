@@ -14,9 +14,10 @@ pipeline {
             steps {
                 echo "🐍 Setting up Python..."
                 sh '''
+                    sudo dpkg --configure -a
                     sudo apt update
                     sudo apt install -y python3 python3-pip
-                    sudo pip3 install -r requirements.txt
+                    pip3 install -r requirements.txt
                 '''
             }
         }
